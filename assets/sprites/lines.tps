@@ -36,7 +36,7 @@
         <key>dataFormat</key>
         <string>spritesheet-only</string>
         <key>textureFileName</key>
-        <filename></filename>
+        <filename>lines.png</filename>
         <key>flipPVR</key>
         <false/>
         <key>pvrCompressionQuality</key>
