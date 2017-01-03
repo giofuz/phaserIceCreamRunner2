@@ -1,9 +1,9 @@
 var game;
-var goon, goon1, goonArrives, e;
+var goon, goonArrives, e;
 var icecream;
-var sprites;
+var goons;
 var counter= 0; var rip = 0; var collision= false;
-var bgd, bg01, bg02, mg01, mg02;
+var frame, bgd, bg01, bg02, mg01, mg02;
 var road01, shadow;
 var speed01;
 var sky01;
@@ -27,6 +27,8 @@ var plob;
 var scale = .5;
 var Goon;
 var orderQue = [];
+var order;
+var picOfOrder,groupOfPics;
 
 window.onload = function() {
 	game = new Phaser.Game(990, 1098, Phaser.AUTO, "");
@@ -63,6 +65,7 @@ var preload = function(game){};
 preload.prototype = {
     preload: function() {
         game.load.image("loading", "assets/sprites/loading.png");
+        game.load.image("frame", "assets/sprites/frame.png");
         game.load.image("icecream", "assets/sprites/icecream.png");
         game.load.image('sky', 'assets/sprites/SKY0001.png');
         game.load.image('plainground', 'assets/sprites/GROUND_PLAIN0001.png');
@@ -85,12 +88,14 @@ preload.prototype = {
         game.load.image("vanilla", "assets/sprites/vanilla.png");
         game.load.image("chocolate", "assets/sprites/choc.png");
         game.load.image("box", "assets/sprites/box.png");
+        game.load.image("strawberry vanilla chocolate", "assets/sprites/order1.png");
         game.load.audio('plob', 'assets/sounds/plob.mp3');
+
 
     },
 
     create: function() {
-        this.game.state.start("PlayGame");
+        this.game.state.start("TitleScreen");
         console.log("===preload state. create function");
     }
 }
@@ -101,6 +106,7 @@ titleScreen.prototype = {
         console.log("==title Screen state. create function");
         //Draw images to screen
         var image = game.add.image(game.world.width/2-191, game.world.height/2-165, 'logo');
+        var frame = game.add.image(0, 0, 'frame');
 
         // Call the 'jump' function when the spacekey is hit
         var spacekey = game.input.keyboard.addKey(
@@ -136,9 +142,11 @@ playGame.prototype = {
         van = game.add.sprite(game.world.width/2-150, game.world.height/2-300, 'van');
 
         //ice cream goon
-        sprites = game.add.group();
+        goons = game.add.group();
         time_til_spawn = Math.random()*4000 + 1000;  //Random time between 2 and 5 seconds.
         last_spawn_time = game.time.time;
+
+        groupOfPics = game.add.group();
 
         //van animation
         drive = van.animations.add('walk');
@@ -190,17 +198,6 @@ playGame.prototype = {
         key2.onDown.add(this.playFx, this);
         key3.onDown.add(this.playFx, this);
 
-        Goon = function (order, xPos, yPos, asset) {
-          this.order = 'order';
-          this.xPos = 'xPos';
-          this.yPos = 'yPos';
-          this.asset = 'asset';
-//          console.log('order: ' + order);
-//            console.log('xPos: ' + xPos);
-//            console.log('yPos: ' + yPos);
-//            console.log('asset: ' + asset);
-        };
-
 
     },
 
@@ -215,10 +212,10 @@ playGame.prototype = {
 
 
         //goon spawning&animating
-        sprites.setAll('x', -10, true, true, 1);
-        sprites.forEach(this.checkSprite, this, true);
+        goons.setAll('x', +2, true, true, 1);
+        goons.forEach(this.checkGoon, this, true);
 
-        game.debug.text("Group size: " + sprites.total, 32, 192, "#ddd");
+        game.debug.text("Group size: " + goons.total, 32, 192, "#ddd");
         game.debug.text("Destroyed: " + rip, 32, 224, "#ddd");
         game.debug.text("Result of collision: " + collision, 32, 256, "#ddd");
         game.debug.text("Game fps: " + game.time.fps, 32, 288, "#ddd");
@@ -234,7 +231,7 @@ playGame.prototype = {
         if(current_time - last_spawn_time > time_til_spawn){
             time_til_spawn = Math.random()*4000 + 1000;
             last_spawn_time = current_time;
-            this.createSprite();
+            this.createGoon();
         }
 
         game.debug.text("Make me a: " + ex + " icecream", 32, 32, "#ddd");
@@ -246,33 +243,35 @@ playGame.prototype = {
 
     },
 
-    checkSprite: function(sprite) {
+    checkGoon: function(goon) {
 
         try {
-            if (sprite.x < -100)
+            if (goon.order == s)
             {
                 rip++;
-                sprites.remove(sprite, true);
+                goons.remove(goon, true);
             }
         }
         catch (e)
         {
-            console.log(sprite);
+            //console.log(goon);
         }
 
     },
 
-    createSprite: function() {
+    createGoon: function() {
 
         ex = '';
         for(var i = Math.floor(Math.random() * 3); i <= 2; i++){
-            ex = ex + " " + flavours.children[Math.floor(Math.random() * 3) + 0].key
+            ex = ex + " " + flavours.children[Math.floor(Math.random() * 3) + 0].key;
+            picOfOrder = groupOfPics.create(game.world.width/2, game.world.height+100, ex);
             //console.log(flavours.children[Math.floor(Math.random() * 3) + 0].key)
         }
 
-        goon = new Goon(ex, game.world.width, game.world.height/2, 'goon');
-        goon1 = sprites.create(game.world.width, game.world.height/2, 'goon');
-        console.log(goon)
+        goon = goons.create(0, game.world.height/2, 'goon');
+        goon.order = ex;
+        console.log()
+
     },
 
     SecondTween: function() {
@@ -283,7 +282,7 @@ playGame.prototype = {
 
     },
 
-    collisionHandler: function(obj1, obj2, sprites) {
+    collisionHandler: function(obj1, obj2, goons) {
 
         //  The two sprites are colliding
         collision = true;
@@ -374,6 +373,7 @@ playGame.prototype = {
 
         if(ex == s){
             game.time.events.add(Phaser.Timer.SECOND * 1, this.plusScore, this);
+            return s;
         }
         else{
             game.time.events.add(Phaser.Timer.SECOND * 1, this.minusScore, this);
